@@ -25,6 +25,13 @@ func main() {
 	if err = ValidateInput(file); err != nil {
 		log.Fatal(err)
 	}
+
+	club, err := NewClub(file)
+	if err != nil {
+		log.Fatalf("error creating club:%s", err)
+	}
+
+	club.StartSimulation()
 }
 
 func ValidateInput(inputFile *os.File) error {
@@ -34,7 +41,6 @@ func ValidateInput(inputFile *os.File) error {
 	validCommand := regexp.MustCompile(
 		`^([0-1]\d|2[0-3]):([0-5]\d) (([1,3,4]) ([a-z0-9_]+)|(2 ([a-z0-9_]+) [0-9]+))$`,
 	)
-
 	validTime := regexp.MustCompile(`^([0-1]\d|2[0-3]):([0-5]\d) `)
 
 	line := 1
@@ -48,6 +54,15 @@ func ValidateInput(inputFile *os.File) error {
 	line++
 	scanner.Scan()
 	if !validWorkHours.MatchString(scanner.Text()) {
+		return fmt.Errorf("line %d invalid work hours:\n%s", line, scanner.Text())
+	}
+
+	matches := validWorkHours.FindStringSubmatch(scanner.Text())
+	startHour := NewTime(matches[1], matches[2])
+	endHour := NewTime(matches[3], matches[4])
+	endHour.Subtract(startHour)
+
+	if endHour.hour < 0 || endHour.minute < 0 {
 		return fmt.Errorf("line %d invalid work hours:\n%s", line, scanner.Text())
 	}
 
