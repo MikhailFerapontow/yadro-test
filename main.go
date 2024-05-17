@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 func main() {
@@ -27,18 +28,20 @@ func main() {
 }
 
 func ValidateInput(inputFile *os.File) error {
-	validTableNum := regexp.MustCompile(`^[0-9]+$`)
+	validNumOfTable := regexp.MustCompile(`^[0-9]+$`)
 	validWorkHours := regexp.MustCompile(`^([0-1]\d|2[0-3]):([0-5]\d) ([0-1]\d|2[0-3]):([0-5]\d)$`)
 	validProfit := regexp.MustCompile(`^[0-9]+$`)
 	validCommand := regexp.MustCompile(
 		`^([0-1]\d|2[0-3]):([0-5]\d) (([1,3,4]) ([a-z0-9_]+)|(2 ([a-z0-9_]+) [0-9]+))$`,
 	)
 
+	validTime := regexp.MustCompile(`^([0-1]\d|2[0-3]):([0-5]\d) `)
+
 	line := 1
 	scanner := bufio.NewScanner(inputFile)
 
 	scanner.Scan()
-	if !validTableNum.MatchString(scanner.Text()) {
+	if !validNumOfTable.MatchString(scanner.Text()) {
 		return fmt.Errorf("line %d invalid number of tables:\n%s", line, scanner.Text())
 	}
 
@@ -54,6 +57,7 @@ func ValidateInput(inputFile *os.File) error {
 		return fmt.Errorf("line %d invalid hour payment:\n%s", line, scanner.Text())
 	}
 
+	prevTime := Time{hour: 0, minute: 0}
 	for {
 		line++
 
@@ -61,9 +65,23 @@ func ValidateInput(inputFile *os.File) error {
 			break
 		}
 
-		if !validCommand.MatchString(scanner.Text()) {
+		lineText := scanner.Text()
+
+		if !validCommand.MatchString(lineText) {
 			return fmt.Errorf("line %d invalid command:\n%s", line, scanner.Text())
 		}
+
+		//check if time flows forward
+		matches := validTime.FindStringSubmatch(lineText)
+		hour, _ := strconv.Atoi(matches[1])
+		minutes, _ := strconv.Atoi(matches[2])
+
+		if hour < prevTime.hour || (hour == prevTime.hour && minutes < prevTime.minute) {
+			return fmt.Errorf("line %d Time can only flow forward...\n%s", line, scanner.Text())
+		}
+
+		prevTime.hour = hour
+		prevTime.minute = minutes
 	}
 
 	return nil
