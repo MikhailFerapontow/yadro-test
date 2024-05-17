@@ -2,43 +2,21 @@ package models
 
 import "testing"
 
-func TestTimeBefore(t *testing.T) {
+func TestTimeCmp(t *testing.T) {
 	testTable := []struct {
 		testName    string
 		t1          Time
 		t2          Time
-		expectedAns bool
+		expectedAns int
 	}{
-		{"time1 < time2", Time{Hour: 1, Minute: 0}, Time{Hour: 2, Minute: 0}, true},
-		{"time1 > time2", Time{Hour: 2, Minute: 0}, Time{Hour: 1, Minute: 0}, false},
-		{"time1 == time2", Time{Hour: 1, Minute: 0}, Time{Hour: 1, Minute: 0}, false},
+		{"time1 < time2", Time{Hour: 1, Minute: 0}, Time{Hour: 2, Minute: 0}, -1},
+		{"time1 > time2", Time{Hour: 2, Minute: 0}, Time{Hour: 1, Minute: 0}, 1},
+		{"time1 == time2", Time{Hour: 1, Minute: 0}, Time{Hour: 1, Minute: 0}, 0},
 	}
 
 	for _, test := range testTable {
 		t.Run(test.testName, func(t *testing.T) {
-			ans := test.t1.Before(test.t2)
-			if ans != test.expectedAns {
-				t.Errorf("%s: expected %v, got %v", test.testName, test.expectedAns, ans)
-			}
-		})
-	}
-}
-
-func TestTimeAfter(t *testing.T) {
-	testTable := []struct {
-		testName    string
-		t1          Time
-		t2          Time
-		expectedAns bool
-	}{
-		{"time1 < time2", Time{Hour: 1, Minute: 0}, Time{Hour: 2, Minute: 0}, false},
-		{"time1 > time2", Time{Hour: 2, Minute: 0}, Time{Hour: 1, Minute: 0}, true},
-		{"time1 == time2", Time{Hour: 1, Minute: 0}, Time{Hour: 1, Minute: 0}, false},
-	}
-
-	for _, test := range testTable {
-		t.Run(test.testName, func(t *testing.T) {
-			ans := test.t1.After(test.t2)
+			ans := test.t1.Cmp(test.t2)
 			if ans != test.expectedAns {
 				t.Errorf("%s: expected %v, got %v", test.testName, test.expectedAns, ans)
 			}

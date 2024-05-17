@@ -93,9 +93,10 @@ func (c *Club) StartSimulation() {
 	c.TableInfo()
 }
 
+// client arrives to club
 func (c *Club) clientArrive(time models.Time, client string) {
 	//check working hours
-	if time.Before(c.startHour) || time.After(c.endHour) {
+	if time.Cmp(c.startHour) == -1 || time.Cmp(c.endHour) == 1 {
 		fmt.Printf("%s 13 NotOpenYet\n", time.String())
 		return
 	}
@@ -114,6 +115,7 @@ func (c *Club) clientArrive(time models.Time, client string) {
 	}
 }
 
+// client takes empty table
 func (c *Club) clientTakeTable(time models.Time, client string, tableId int) {
 	curClient, ok := c.client[client]
 	if !ok || !curClient.InClub {
@@ -131,6 +133,7 @@ func (c *Club) clientTakeTable(time models.Time, client string, tableId int) {
 	c.table[tableId-1] = models.Table{Occupied: true, StartUse: time}
 }
 
+// client waits to take table
 func (c *Club) clientWait(time models.Time, client string) {
 	//check if free tables exist
 	for _, t := range c.table {
@@ -140,13 +143,16 @@ func (c *Club) clientWait(time models.Time, client string) {
 		}
 	}
 
+	// fill client queue
 	select {
 	case c.queue <- client:
 	default:
+		//if queue is full
 		fmt.Printf("%s 11 %s\n", time.String(), client)
 	}
 }
 
+// client leaves the club
 func (c *Club) clientLeave(time models.Time, client string) {
 	curClient, ok := c.client[client]
 	if !ok || !curClient.InClub {
@@ -155,11 +161,16 @@ func (c *Club) clientLeave(time models.Time, client string) {
 	}
 
 	tableIdx := curClient.TableNum - 1
-	t := c.table[tableIdx]
+	t, ok := c.table[tableIdx]
+	if !ok {
+		c.client[client] = models.Client{InClub: false, TableNum: 0}
+		return
+	}
 	t.StopUsage(time)
 
 	c.client[client] = models.Client{InClub: false, TableNum: 0}
 
+	// take first client from queue
 	select {
 	case queueClient := <-c.queue:
 		c.client[queueClient] = models.Client{InClub: true, TableNum: tableIdx + 1}
@@ -196,7 +207,9 @@ func (c *Club) CloseClub() {
 }
 
 func (c *Club) TableInfo() {
+
+	// Порядок нам не важен судя по заданию
 	for i, t := range c.table {
-		fmt.Printf("%d %d %s\n", i+1, t.CalculatePrice(c.tariff), t.InUse.String())
+		fmt.Printf("%d %d %s\n", i+1, t.CalculateProfit(c.tariff), t.InUse.String())
 	}
 }

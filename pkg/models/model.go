@@ -16,11 +16,24 @@ func NewTime(hours, minutes string) Time {
 	return Time{Hour: hour, Minute: minute}
 }
 
-func (t1 *Time) Before(t2 Time) bool {
+// Cmp return -1 if time1 is before time2;
+// return 0 if time1 is equal time2;
+// return 1 if time1 is after time2;
+func (t1 *Time) Cmp(t2 Time) int {
+	if t1.before(t2) {
+		return -1
+	}
+	if t1.after(t2) {
+		return 1
+	}
+	return 0
+}
+
+func (t1 *Time) before(t2 Time) bool {
 	return t1.Hour < t2.Hour || (t1.Hour == t2.Hour && t1.Minute < t2.Minute)
 }
 
-func (t1 *Time) After(t2 Time) bool {
+func (t1 *Time) after(t2 Time) bool {
 	return t1.Hour > t2.Hour || (t1.Hour == t2.Hour && t1.Minute > t2.Minute)
 }
 
@@ -56,7 +69,7 @@ func (t *Table) StopUsage(end Time) {
 	t.Occupied = false
 }
 
-func (t *Table) CalculatePrice(tariff int) int {
+func (t *Table) CalculateProfit(tariff int) int {
 	sum := t.InUse.Hour * tariff
 	if t.InUse.Minute > 0 {
 		sum += tariff

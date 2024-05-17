@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"regexp"
@@ -15,7 +16,7 @@ import (
 func main() {
 	args := os.Args
 	if len(args) != 2 {
-		log.Fatalf("invalid number of arguments. Need 1, got %d", len(args))
+		log.Fatalf("invalid number of arguments. Need 1, got %d", len(args)-1)
 	}
 
 	fileName := args[1]
@@ -42,7 +43,7 @@ func main() {
 	club.StartSimulation()
 }
 
-func ValidateInput(inputFile *os.File) error {
+func ValidateInput(inputFile io.Reader) error {
 	validNumOfTable := regexp.MustCompile(`^[0-9]+$`)
 	validWorkHours := regexp.MustCompile(`^([0-1]\d|2[0-3]):([0-5]\d) ([0-1]\d|2[0-3]):([0-5]\d)$`)
 	validProfit := regexp.MustCompile(`^[0-9]+$`)
@@ -69,7 +70,7 @@ func ValidateInput(inputFile *os.File) error {
 	startHour := models.NewTime(matches[1], matches[2])
 	endHour := models.NewTime(matches[3], matches[4])
 
-	if !endHour.After(startHour) {
+	if endHour.Cmp(startHour) != 1 {
 		return fmt.Errorf("line %d invalid work hours:\n%s", line, scanner.Text())
 	}
 
@@ -98,7 +99,7 @@ func ValidateInput(inputFile *os.File) error {
 		hour, _ := strconv.Atoi(matches[1])
 		minutes, _ := strconv.Atoi(matches[2])
 
-		if hour < prevTime.Hour || (hour == prevTime.Hour && minutes < prevTime.Minute) {
+		if prevTime.Cmp(models.Time{Hour: hour, Minute: minutes}) == 1 {
 			return fmt.Errorf("line %d Time can only flow forward...\n%s", line, scanner.Text())
 		}
 
