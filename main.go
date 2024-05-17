@@ -7,6 +7,9 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+
+	"github.com/MikhailFerapontow/yadro-test/pkg/club"
+	"github.com/MikhailFerapontow/yadro-test/pkg/models"
 )
 
 func main() {
@@ -26,7 +29,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	club, err := NewClub(file)
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	club, err := club.NewClub(file)
 	if err != nil {
 		log.Fatalf("error creating club:%s", err)
 	}
@@ -58,11 +66,10 @@ func ValidateInput(inputFile *os.File) error {
 	}
 
 	matches := validWorkHours.FindStringSubmatch(scanner.Text())
-	startHour := NewTime(matches[1], matches[2])
-	endHour := NewTime(matches[3], matches[4])
-	endHour.Subtract(startHour)
+	startHour := models.NewTime(matches[1], matches[2])
+	endHour := models.NewTime(matches[3], matches[4])
 
-	if endHour.hour < 0 || endHour.minute < 0 {
+	if !endHour.After(startHour) {
 		return fmt.Errorf("line %d invalid work hours:\n%s", line, scanner.Text())
 	}
 
@@ -72,7 +79,7 @@ func ValidateInput(inputFile *os.File) error {
 		return fmt.Errorf("line %d invalid hour payment:\n%s", line, scanner.Text())
 	}
 
-	prevTime := Time{hour: 0, minute: 0}
+	prevTime := models.Time{Hour: 0, Minute: 0}
 	for {
 		line++
 
@@ -91,12 +98,12 @@ func ValidateInput(inputFile *os.File) error {
 		hour, _ := strconv.Atoi(matches[1])
 		minutes, _ := strconv.Atoi(matches[2])
 
-		if hour < prevTime.hour || (hour == prevTime.hour && minutes < prevTime.minute) {
+		if hour < prevTime.Hour || (hour == prevTime.Hour && minutes < prevTime.Minute) {
 			return fmt.Errorf("line %d Time can only flow forward...\n%s", line, scanner.Text())
 		}
 
-		prevTime.hour = hour
-		prevTime.minute = minutes
+		prevTime.Hour = hour
+		prevTime.Minute = minutes
 	}
 
 	return nil

@@ -1,32 +1,29 @@
-package main
+package club
 
 import (
 	"bufio"
 	"fmt"
-	"os"
+	"io"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/MikhailFerapontow/yadro-test/pkg/models"
 )
 
 type Club struct {
 	scanner *bufio.Scanner
 
 	queue  chan string
-	client map[string]Client
-	table  map[int]Table
+	client map[string]models.Client
+	table  map[int]models.Table
 
 	tariff    int
-	startHour Time
-	endHour   Time
+	startHour models.Time
+	endHour   models.Time
 }
 
-func NewClub(file *os.File) (*Club, error) {
-	_, err := file.Seek(0, 0)
-	if err != nil {
-		return nil, err
-	}
-
+func NewClub(file io.Reader) (*Club, error) {
 	scanner := bufio.NewScanner(file)
 	scanner.Scan()
 	numOfTable, _ := strconv.Atoi(scanner.Text())
@@ -39,18 +36,18 @@ func NewClub(file *os.File) (*Club, error) {
 	scanner.Scan()
 	tariff, _ := strconv.Atoi(scanner.Text())
 
-	table := make(map[int]Table, numOfTable)
+	table := make(map[int]models.Table, numOfTable)
 	for i := 0; i < numOfTable; i++ {
-		table[i] = Table{}
+		table[i] = models.Table{}
 	}
 
 	return &Club{
 		queue:     make(chan string, numOfTable),
-		client:    make(map[string]Client),
+		client:    make(map[string]models.Client),
 		table:     table,
 		tariff:    tariff,
-		startHour: NewTime(workHours[0], workHours[1]),
-		endHour:   NewTime(workHours[2], workHours[3]),
+		startHour: models.NewTime(workHours[0], workHours[1]),
+		endHour:   models.NewTime(workHours[2], workHours[3]),
 		scanner:   scanner,
 	}, nil
 }
@@ -67,7 +64,7 @@ func (c *Club) StartSimulation() {
 			return c == ':' || c == ' '
 		})
 
-		time := NewTime(tokens[0], tokens[1])
+		time := models.NewTime(tokens[0], tokens[1])
 		client := tokens[3]
 
 		switch command := tokens[2]; command {
@@ -96,7 +93,7 @@ func (c *Club) StartSimulation() {
 	c.TableInfo()
 }
 
-func (c *Club) clientArrive(time Time, client string) {
+func (c *Club) clientArrive(time models.Time, client string) {
 	//check working hours
 	if time.Before(c.startHour) || time.After(c.endHour) {
 		fmt.Printf("%s 13 NotOpenYet\n", time.String())
@@ -106,38 +103,38 @@ func (c *Club) clientArrive(time Time, client string) {
 	//check if client is in club
 	val, ok := c.client[client]
 	if !ok {
-		c.client[client] = Client{inClub: true, tableNum: 0}
+		c.client[client] = models.Client{InClub: true, TableNum: 0}
 		return
 	}
 
-	if val.inClub {
+	if val.InClub {
 		fmt.Printf("%s 13 YouShallNotPass\n", time.String())
 	} else {
-		c.client[client] = Client{inClub: true, tableNum: 0}
+		c.client[client] = models.Client{InClub: true, TableNum: 0}
 	}
 }
 
-func (c *Club) clientTakeTable(time Time, client string, tableId int) {
+func (c *Club) clientTakeTable(time models.Time, client string, tableId int) {
 	curClient, ok := c.client[client]
-	if !ok || !curClient.inClub {
+	if !ok || !curClient.InClub {
 		fmt.Printf("%s 13 ClientUnknown\n", time.String())
 		return
 	}
 
 	curTable := c.table[tableId-1]
-	if curTable.occupied {
+	if curTable.Occupied {
 		fmt.Printf("%s 13 PlaceIsBusy\n", time.String())
 		return
 	}
 
-	c.client[client] = Client{inClub: true, tableNum: tableId}
-	c.table[tableId-1] = Table{occupied: true, startUse: time}
+	c.client[client] = models.Client{InClub: true, TableNum: tableId}
+	c.table[tableId-1] = models.Table{Occupied: true, StartUse: time}
 }
 
-func (c *Club) clientWait(time Time, client string) {
+func (c *Club) clientWait(time models.Time, client string) {
 	//check if free tables exist
 	for _, t := range c.table {
-		if !t.occupied {
+		if !t.Occupied {
 			fmt.Printf("%s 13 ICanWaitNoLonger!\n", time.String())
 			return
 		}
@@ -150,23 +147,23 @@ func (c *Club) clientWait(time Time, client string) {
 	}
 }
 
-func (c *Club) clientLeave(time Time, client string) {
+func (c *Club) clientLeave(time models.Time, client string) {
 	curClient, ok := c.client[client]
-	if !ok || !curClient.inClub {
+	if !ok || !curClient.InClub {
 		fmt.Printf("%s 13 ClientUnknown\n", time.String())
 		return
 	}
 
-	tableIdx := curClient.tableNum - 1
+	tableIdx := curClient.TableNum - 1
 	t := c.table[tableIdx]
 	t.StopUsage(time)
 
-	c.client[client] = Client{inClub: false, tableNum: 0}
+	c.client[client] = models.Client{InClub: false, TableNum: 0}
 
 	select {
 	case queueClient := <-c.queue:
-		c.client[queueClient] = Client{inClub: true, tableNum: tableIdx + 1}
-		c.table[tableIdx] = Table{occupied: true, startUse: time, inUse: t.inUse}
+		c.client[queueClient] = models.Client{InClub: true, TableNum: tableIdx + 1}
+		c.table[tableIdx] = models.Table{Occupied: true, StartUse: time, InUse: t.InUse}
 		fmt.Printf("%s 12 %s %d\n", time.String(), queueClient, tableIdx+1)
 	default:
 		c.table[tableIdx] = t
@@ -177,8 +174,8 @@ func (c *Club) CloseClub() {
 	clients := make([]string, 0)
 
 	for clientName, client := range c.client {
-		if client.inClub {
-			tableIdx := client.tableNum - 1
+		if client.InClub {
+			tableIdx := client.TableNum - 1
 			val, ok := c.table[tableIdx]
 			if ok {
 				val.StopUsage(c.endHour)
@@ -200,6 +197,6 @@ func (c *Club) CloseClub() {
 
 func (c *Club) TableInfo() {
 	for i, t := range c.table {
-		fmt.Printf("%d %d %s\n", i+1, t.CalculatePrice(c.tariff), t.inUse.String())
+		fmt.Printf("%d %d %s\n", i+1, t.CalculatePrice(c.tariff), t.InUse.String())
 	}
 }
