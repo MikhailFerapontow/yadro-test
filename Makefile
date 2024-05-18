@@ -3,7 +3,7 @@ image_name = "ferapontov/yadro-test"
 make: build
 
 test:
-	go test ./...
+	docker run --rm $(image_name) go test ./...
 
 build:
 	docker build -t $(image_name) .
