@@ -59,11 +59,7 @@ type Table struct {
 func (t *Table) StopUsage(end Time) {
 	usageTime := end.Subtract(t.StartUse)
 
-	// fmt.Printf("%d, %d\n", usageTime.hour, t.inUse.hour)
-	// fmt.Printf("%d, %d\n", usageTime.minute, t.startUse.minute)
 	minutesInUse := (usageTime.Hour+t.InUse.Hour)*60 + (usageTime.Minute + t.InUse.Minute)
-
-	// fmt.Printf("min = %d\n", minutesInUse)
 
 	t.InUse = Time{Hour: minutesInUse / 60, Minute: minutesInUse % 60}
 	t.Occupied = false

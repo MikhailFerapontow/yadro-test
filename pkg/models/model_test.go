@@ -45,3 +45,60 @@ func TestTimeSubtract(t *testing.T) {
 		})
 	}
 }
+
+func TestTableStopUsage(t *testing.T) {
+	testTable := []struct {
+		testName    string
+		table       Table
+		endTime     Time
+		expectedAns Table
+	}{
+		{
+			testName:    "stop usage",
+			table:       Table{Occupied: true, StartUse: Time{Hour: 2, Minute: 28}, InUse: Time{Hour: 0, Minute: 00}},
+			endTime:     Time{Hour: 4, Minute: 10},
+			expectedAns: Table{Occupied: false, InUse: Time{Hour: 1, Minute: 42}},
+		},
+	}
+
+	for _, test := range testTable {
+		t.Run(test.testName, func(t *testing.T) {
+			test.table.StopUsage(test.endTime)
+
+			if test.table.InUse != test.expectedAns.InUse {
+				t.Errorf("%s: expected %v, got %v", test.testName, test.expectedAns, test.table)
+			}
+		})
+	}
+}
+
+func TestTableCalculateProfit(t *testing.T) {
+	testTable := []struct {
+		testName    string
+		table       Table
+		tariff      int
+		expectedAns int
+	}{
+		{
+			testName:    "calculate profit",
+			table:       Table{InUse: Time{Hour: 2, Minute: 28}},
+			tariff:      10,
+			expectedAns: 30,
+		},
+		{
+			testName:    "full hour",
+			table:       Table{InUse: Time{Hour: 2, Minute: 0}},
+			tariff:      10,
+			expectedAns: 20,
+		},
+	}
+
+	for _, test := range testTable {
+		t.Run(test.testName, func(t *testing.T) {
+			ans := test.table.CalculateProfit(test.tariff)
+			if ans != test.expectedAns {
+				t.Errorf("%s: expected %v, got %v", test.testName, test.expectedAns, ans)
+			}
+		})
+	}
+}
