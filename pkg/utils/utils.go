@@ -30,7 +30,7 @@ func ValidateInput(inputFile io.Reader) error {
 		return fmt.Errorf("line %d invalid number of tables:\n%s", line, scanner.Text())
 	}
 	matches := validNum.FindStringSubmatch(scanner.Text())
-	numOfTable, _ := strconv.Atoi(matches[0])
+	numOfTables, _ := strconv.Atoi(matches[0])
 
 	line++
 	scanner.Scan()
@@ -71,7 +71,7 @@ func ValidateInput(inputFile io.Reader) error {
 		if commandType2 {
 			matches = validCommandType2.FindStringSubmatch(lineText)
 			tableNum, _ := strconv.Atoi(matches[4])
-			if tableNum > numOfTable || tableNum == 0 {
+			if tableNum > numOfTables || tableNum == 0 {
 				return fmt.Errorf("line %d invalid table number:\n%s", line, scanner.Text())
 			}
 		}

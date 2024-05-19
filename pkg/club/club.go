@@ -223,9 +223,13 @@ func (c *Club) CloseClub() {
 }
 
 func (c *Club) TableInfo() {
+	output := make([]string, len(c.table))
 
-	// Порядок нам не важен судя по заданию
 	for i, t := range c.table {
-		fmt.Printf("%d %d %s\n", i+1, t.CalculateProfit(c.tariff), t.InUse.String())
+		output[i] = fmt.Sprintf("%d %d %s", i+1, t.CalculateProfit(c.tariff), t.InUse.String())
+	}
+
+	for _, o := range output {
+		fmt.Println(o)
 	}
 }

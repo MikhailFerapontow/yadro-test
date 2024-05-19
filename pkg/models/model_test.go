@@ -91,6 +91,12 @@ func TestTableCalculateProfit(t *testing.T) {
 			tariff:      10,
 			expectedAns: 20,
 		},
+		{
+			testName:    "almost an hour",
+			table:       Table{InUse: Time{Hour: 5, Minute: 58}},
+			tariff:      10,
+			expectedAns: 70,
+		},
 	}
 
 	for _, test := range testTable {
