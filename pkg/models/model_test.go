@@ -81,19 +81,19 @@ func TestTableCalculateProfit(t *testing.T) {
 	}{
 		{
 			testName:    "calculate profit",
-			table:       Table{InUse: Time{Hour: 2, Minute: 28}},
+			table:       Table{FullHours: 3},
 			tariff:      10,
 			expectedAns: 30,
 		},
 		{
 			testName:    "full hour",
-			table:       Table{InUse: Time{Hour: 2, Minute: 0}},
+			table:       Table{FullHours: 2},
 			tariff:      10,
 			expectedAns: 20,
 		},
 		{
 			testName:    "almost an hour",
-			table:       Table{InUse: Time{Hour: 5, Minute: 58}},
+			table:       Table{FullHours: 7},
 			tariff:      10,
 			expectedAns: 70,
 		},

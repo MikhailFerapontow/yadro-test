@@ -190,7 +190,7 @@ func (c *Club) clientLeave(time models.Time, clientName string) {
 	select {
 	case queueClient := <-c.queue:
 		c.client[queueClient] = models.Client{InClub: true, TableNum: tableIdx + 1}
-		c.table[tableIdx] = models.Table{Occupied: true, StartUse: time, InUse: table.InUse}
+		c.table[tableIdx] = models.Table{Occupied: true, StartUse: time, InUse: table.InUse, FullHours: table.FullHours}
 		fmt.Printf("%s 12 %s %d\n", time.String(), queueClient, tableIdx+1)
 	default:
 		c.table[tableIdx] = table

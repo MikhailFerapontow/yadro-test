@@ -57,15 +57,21 @@ func (t *Time) String() string {
 }
 
 type Table struct {
-	Occupied bool
-	StartUse Time
-	InUse    Time
+	Occupied  bool
+	StartUse  Time
+	InUse     Time
+	FullHours int // how many full hours the table was in use
 }
 
 // stop usage of the table at time end
 // update the inUse time
 func (t *Table) StopUsage(end Time) {
 	usageTime := end.Subtract(t.StartUse)
+
+	t.FullHours += usageTime.Hour
+	if usageTime.Minute > 0 {
+		t.FullHours++
+	}
 
 	minutesInUse := (usageTime.Hour+t.InUse.Hour)*60 + (usageTime.Minute + t.InUse.Minute)
 
@@ -74,12 +80,7 @@ func (t *Table) StopUsage(end Time) {
 }
 
 func (t *Table) CalculateProfit(tariff int) int {
-	sum := t.InUse.Hour * tariff
-	if t.InUse.Minute > 0 {
-		sum += tariff
-	}
-
-	return sum
+	return t.FullHours * tariff
 }
 
 type Client struct {
