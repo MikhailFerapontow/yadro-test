@@ -77,22 +77,20 @@ func (c *Club) StartSimulation() {
 		time, _ := models.NewTime(tokens[0], tokens[1])
 		client := tokens[3]
 
+		PrintLine(c.scanner.Text())
+
 		switch command := tokens[2]; command {
 		case ClientArrive:
-			fmt.Printf("%s\n", c.scanner.Text())
 
 			c.clientArrive(time, client)
 		case ClientTakesTable:
-			fmt.Printf("%s\n", c.scanner.Text())
 
 			tableId, _ := strconv.Atoi(tokens[4])
 			c.clientTakeTable(time, client, tableId)
 		case ClientWait:
-			fmt.Printf("%s\n", c.scanner.Text())
 
 			c.clientWait(time, client)
 		case ClientLeave:
-			fmt.Printf("%s\n", c.scanner.Text())
 
 			c.clientLeave(time, client)
 		}
@@ -107,7 +105,7 @@ func (c *Club) StartSimulation() {
 func (c *Club) clientArrive(time models.Time, clientName string) {
 	//check working hours
 	if time.Cmp(c.startHour) == -1 || time.Cmp(c.endHour) == 1 {
-		fmt.Printf("%s 13 NotOpenYet\n", time.String())
+		NotOpenYet(time.String())
 		return
 	}
 
@@ -119,7 +117,7 @@ func (c *Club) clientArrive(time models.Time, clientName string) {
 	}
 
 	if client.InClub {
-		fmt.Printf("%s 13 YouShallNotPass\n", time.String())
+		YouShallNotPass(time.String())
 	} else {
 		c.client[clientName] = models.Client{InClub: true, TableNum: 0}
 	}
@@ -129,13 +127,13 @@ func (c *Club) clientArrive(time models.Time, clientName string) {
 func (c *Club) clientTakeTable(time models.Time, clientName string, tableId int) {
 	client, ok := c.client[clientName]
 	if !ok || !client.InClub {
-		fmt.Printf("%s 13 ClientUnknown\n", time.String())
+		ClientUnknown(time.String())
 		return
 	}
 
 	curTable := c.table[tableId-1]
 	if curTable.Occupied {
-		fmt.Printf("%s 13 PlaceIsBusy\n", time.String())
+		PlaceIsBusy(time.String())
 		return
 	}
 
@@ -147,14 +145,14 @@ func (c *Club) clientTakeTable(time models.Time, clientName string, tableId int)
 func (c *Club) clientWait(time models.Time, clientName string) {
 	client, ok := c.client[clientName]
 	if !ok || !client.InClub {
-		fmt.Printf("%s 13 ClientUnknown\n", time.String())
+		ClientUnknown(time.String())
 		return
 	}
 
 	//check if free tables exist
 	for _, t := range c.table {
 		if !t.Occupied {
-			fmt.Printf("%s 13 ICanWaitNoLonger!\n", time.String())
+			ICanWaitNoLonger(time.String())
 			return
 		}
 	}
@@ -164,7 +162,7 @@ func (c *Club) clientWait(time models.Time, clientName string) {
 	case c.queue <- clientName:
 	default:
 		//if queue is full
-		fmt.Printf("%s 11 %s\n", time.String(), clientName)
+		ClientLeft(time.String(), clientName)
 	}
 }
 
@@ -172,7 +170,7 @@ func (c *Club) clientWait(time models.Time, clientName string) {
 func (c *Club) clientLeave(time models.Time, clientName string) {
 	client, ok := c.client[clientName]
 	if !ok || !client.InClub {
-		fmt.Printf("%s 13 ClientUnknown\n", time.String())
+		ClientUnknown(time.String())
 		return
 	}
 
@@ -191,7 +189,7 @@ func (c *Club) clientLeave(time models.Time, clientName string) {
 	case queueClient := <-c.queue:
 		c.client[queueClient] = models.Client{InClub: true, TableNum: tableIdx + 1}
 		c.table[tableIdx] = models.Table{Occupied: true, StartUse: time, InUse: table.InUse, FullHours: table.FullHours}
-		fmt.Printf("%s 12 %s %d\n", time.String(), queueClient, tableIdx+1)
+		ClientTakeTable(time.String(), queueClient, tableIdx+1)
 	default:
 		c.table[tableIdx] = table
 	}
@@ -218,18 +216,18 @@ func (c *Club) CloseClub() {
 	})
 
 	for _, client := range clients {
-		fmt.Printf("%s 11 %s\n", c.endHour.String(), client)
+		ClientLeft(c.endHour.String(), client)
 	}
 }
 
 func (c *Club) TableInfo() {
 	output := make([]string, len(c.table))
 
-	for i, t := range c.table {
-		output[i] = fmt.Sprintf("%d %d %s", i+1, t.CalculateProfit(c.tariff), t.InUse.String())
+	for i, table := range c.table {
+		output[i] = fmt.Sprintf("%d %d %s", i+1, table.CalculateProfit(c.tariff), table.InUse.String())
 	}
 
-	for _, o := range output {
-		fmt.Println(o)
+	for _, table := range output {
+		fmt.Println(table)
 	}
 }
