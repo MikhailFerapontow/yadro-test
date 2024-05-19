@@ -11,6 +11,13 @@ import (
 	"github.com/MikhailFerapontow/yadro-test/pkg/models"
 )
 
+const (
+	ClientArrive     = "1"
+	ClientTakesTable = "2"
+	ClientWait       = "3"
+	ClientLeave      = "4"
+)
+
 type Club struct {
 	scanner *bufio.Scanner
 
@@ -33,6 +40,9 @@ func NewClub(file io.Reader) (*Club, error) {
 		return c == ':' || c == ' '
 	})
 
+	startHour, _ := models.NewTime(workHours[0], workHours[1])
+	endHour, _ := models.NewTime(workHours[2], workHours[3])
+
 	scanner.Scan()
 	tariff, _ := strconv.Atoi(scanner.Text())
 
@@ -46,8 +56,8 @@ func NewClub(file io.Reader) (*Club, error) {
 		client:    make(map[string]models.Client),
 		table:     table,
 		tariff:    tariff,
-		startHour: models.NewTime(workHours[0], workHours[1]),
-		endHour:   models.NewTime(workHours[2], workHours[3]),
+		startHour: startHour,
+		endHour:   endHour,
 		scanner:   scanner,
 	}, nil
 }
@@ -64,24 +74,24 @@ func (c *Club) StartSimulation() {
 			return c == ':' || c == ' '
 		})
 
-		time := models.NewTime(tokens[0], tokens[1])
+		time, _ := models.NewTime(tokens[0], tokens[1])
 		client := tokens[3]
 
 		switch command := tokens[2]; command {
-		case "1":
+		case ClientArrive:
 			fmt.Printf("%s\n", c.scanner.Text())
 
 			c.clientArrive(time, client)
-		case "2":
+		case ClientTakesTable:
 			fmt.Printf("%s\n", c.scanner.Text())
 
 			tableId, _ := strconv.Atoi(tokens[4])
 			c.clientTakeTable(time, client, tableId)
-		case "3":
+		case ClientWait:
 			fmt.Printf("%s\n", c.scanner.Text())
 
 			c.clientWait(time, client)
-		case "4":
+		case ClientLeave:
 			fmt.Printf("%s\n", c.scanner.Text())
 
 			c.clientLeave(time, client)

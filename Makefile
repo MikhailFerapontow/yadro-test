@@ -13,3 +13,6 @@ run:
 	--mount type=bind,source=$(realpath $(INPUT)),target=/app/input.txt \
 	-w /app \
 	$(image_name) ./app input.txt
+
+clean:
+	docker rmi $(image_name)

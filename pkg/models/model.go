@@ -10,10 +10,18 @@ type Time struct {
 	Minute int
 }
 
-func NewTime(hours, minutes string) Time {
-	hour, _ := strconv.Atoi(hours)
-	minute, _ := strconv.Atoi(minutes)
-	return Time{Hour: hour, Minute: minute}
+func NewTime(hours, minutes string) (Time, error) {
+	hour, err := strconv.Atoi(hours)
+	if err != nil {
+		return Time{}, fmt.Errorf("error parsing hour: %s", err)
+	}
+
+	minute, err := strconv.Atoi(minutes)
+	if err != nil {
+		return Time{}, fmt.Errorf("error parsing minute: %s", err)
+	}
+
+	return Time{Hour: hour, Minute: minute}, nil
 }
 
 // Cmp return -1 if time1 is before time2;
