@@ -72,7 +72,7 @@ func ValidateInput(inputFile io.Reader) error {
 			matches = validCommandType2.FindStringSubmatch(lineText)
 			tableNum, _ := strconv.Atoi(matches[4])
 			if tableNum > numOfTables || tableNum == 0 {
-				return fmt.Errorf("line %d invalid table number:\n%s", line, scanner.Text())
+				return fmt.Errorf("line %d Table number out of range:\n%s", line, scanner.Text())
 			}
 		}
 
